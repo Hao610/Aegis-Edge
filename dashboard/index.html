@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Edge | Threat Intelligence Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><span style="color: #0ea5e9;">Aegis</span> Edge</h2>
+                <p>Command Center</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">📊 Overview</a>
+                <a href="#" class="nav-item">🛡️ Blocked Threats</a>
+                <a href="#" class="nav-item">⚙️ Settings</a>
+                <a href="#" class="nav-item">📄 API Access</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Threat Intelligence Dashboard</h1>
+                <div class="user-profile">
+                    <span>Admin User</span>
+                    <div class="avatar">A</div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Summary Card -->
+                <div class="card summary-card">
+                    <h3>Total Threats Blocked This Week</h3>
+                    <div class="stat-value" id="totalThreats">Loading...</div>
+                    <div class="stat-trend positive">+12% from last week</div>
+                </div>
+
+                <div class="card summary-card">
+                    <h3>Inference Speed</h3>
+                    <div class="stat-value text-accent">12.4ms</div>
+                    <div class="stat-trend">Edge AI optimized</div>
+                </div>
+
+                <div class="card summary-card">
+                    <h3>Active Devices</h3>
+                    <div class="stat-value">1,402</div>
+                    <div class="stat-trend positive">All tracking active</div>
+                </div>
+
+                <!-- Heatmap -->
+                <div class="card heatmap-card">
+                    <h3>Global Cyber Threat Heatmap</h3>
+                    <div id="threatMap"></div>
+                </div>
+
+                <!-- Recent Threats Table -->
+                <div class="card table-card">
+                    <h3>Recent Intercepted Threats</h3>
+                    <div class="table-container">
+                        <table id="threatsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Threat Type</th>
+                                    <th>Confidence Score</th>
+                                    <th>Target URI</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

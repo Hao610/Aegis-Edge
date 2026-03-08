@@ -1,0 +1,10 @@
+{
+  "password": 1,
+  "login": 2,
+  "urgent": 3,
+  "verify": 4,
+  "account": 5,
+  "suspended": 6,
+  "free": 7,
+  "win": 8
+}
