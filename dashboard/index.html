@@ -6,10 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aegis Edge | NOC Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&display=swap"
-        rel="stylesheet">
-    <!-- Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -17,68 +14,171 @@
     <div class="dashboard-wrapper">
         <aside class="sidebar">
             <div class="brand">
-                <span class="shield-icon">🛡️</span>
+                <span class="shield-icon">AE</span>
                 <h1>Aegis <span class="highlight">Edge</span></h1>
             </div>
-            <nav class="menu">
-                <a href="#" class="active">📊 Overview</a>
-                <a href="#">⚡ Active Blocks</a>
-                <a href="#">🌐 Node Network</a>
-                <a href="#">⚙️ Configuration</a>
+
+            <nav class="menu" id="menuNav" aria-label="Main Navigation">
+                <a href="#overview" data-route="overview" class="active">Overview</a>
+                <a href="#blocks" data-route="blocks">Active Blocks</a>
+                <a href="#network" data-route="network">Node Network</a>
+                <a href="#config" data-route="config">Configuration</a>
             </nav>
-            <div class="status-indicator">
-                <span class="pulse"></span> System Armed (Inference: < 2ms) </div>
+
+            <div class="status-indicator" id="healthStatus">
+                <span class="pulse"></span>
+                <span id="healthText">System Armed</span>
+            </div>
         </aside>
 
         <main class="main-content">
-            <header>
-                <h2>Edge Intrusion Detection System (IDS)</h2>
+            <header class="topbar">
+                <div>
+                    <h2>Edge Intrusion Detection System</h2>
+                    <p class="subtle" id="lastSyncText">Waiting for data...</p>
+                </div>
                 <div class="header-badges">
-                    <span class="badge success">Local Edge Sync: OK</span>
-                    <span class="badge warning">Cloud API: Connected</span>
+                    <span class="badge success" id="localSyncBadge">Local Sync: Initializing</span>
+                    <span class="badge warning" id="pollBadge">Polling: 3000ms</span>
                 </div>
             </header>
 
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h3>Total Intrusions Blocked</h3>
-                    <div class="value" id="blockedCounter">...</div>
+            <section class="view active" data-view="overview">
+                <div class="metrics-grid">
+                    <article class="metric-card">
+                        <h3>Total Intrusions Blocked</h3>
+                        <div class="value" id="blockedCounter">0</div>
+                    </article>
+                    <article class="metric-card">
+                        <h3>Peak Confidence Score</h3>
+                        <div class="value threat-text" id="peakConfidence">0.00%</div>
+                    </article>
+                    <article class="metric-card">
+                        <h3>Average Inference Latency</h3>
+                        <div class="value safe-text" id="avgLatency">0.0ms</div>
+                    </article>
+                    <article class="metric-card">
+                        <h3>Threats Last Minute</h3>
+                        <div class="value" id="recentThreats">0</div>
+                    </article>
                 </div>
-                <div class="metric-card">
-                    <h3>Peak Confidence Score</h3>
-                    <div class="value threat-text">99.8%</div>
-                </div>
-                <div class="metric-card">
-                    <h3>Average Latency</h3>
-                    <div class="value safe-text">1.8ms</div>
-                </div>
-            </div>
 
-            <section class="chart-section">
-                <h3>Traffic Volume vs Blocked Threats</h3>
-                <div class="chart-container">
-                    <canvas id="threatChart"></canvas>
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Traffic Volume vs Blocked Threats</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="threatChart"></canvas>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Recent Intrusions</h3>
+                    </div>
+                    <div class="table-container">
+                        <table id="alertsTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Source IP</th>
+                                    <th>Port</th>
+                                    <th>Protocol</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section class="view" data-view="blocks">
+                <section class="panel">
+                    <div class="panel-head inline-controls">
+                        <h3>Active Blocks</h3>
+                        <div class="controls-row">
+                            <input id="blockSearch" type="search" placeholder="Search IP or port..." aria-label="Search blocks">
+                            <select id="protocolFilter" aria-label="Filter protocol">
+                                <option value="ALL">All Protocols</option>
+                                <option value="TCP">TCP</option>
+                                <option value="UDP">UDP</option>
+                                <option value="ICMP">ICMP</option>
+                            </select>
+                            <select id="sortBy" aria-label="Sort blocks">
+                                <option value="timestamp_desc">Newest</option>
+                                <option value="confidence_desc">Highest Confidence</option>
+                                <option value="src_ip_asc">Source IP</option>
+                            </select>
+                            <button id="clearFilters" type="button" class="btn ghost">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="blocksTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Source IP</th>
+                                    <th>Port</th>
+                                    <th>Protocol</th>
+                                    <th>Confidence</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p class="subtle" id="blocksCountText">0 records</p>
+                </section>
+            </section>
+
+            <section class="view" data-view="network">
+                <div class="network-grid">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <h3>Protocol Distribution</h3>
+                        </div>
+                        <div class="chart-container small">
+                            <canvas id="protocolChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-head">
+                            <h3>Top Node Segments (/24)</h3>
+                        </div>
+                        <div id="nodeCards" class="node-cards"></div>
+                    </section>
                 </div>
             </section>
 
-            <section class="table-section">
-                <h3>Recent Intrusions Blocked (Real-Time)</h3>
-                <div class="table-container">
-                    <table id="alertsTable">
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>Source IP</th>
-                                <th>Target Port</th>
-                                <th>Protocol</th>
-                                <th>Confidence</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Populated via script.js -->
-                        </tbody>
-                    </table>
-                </div>
+            <section class="view" data-view="config">
+                <section class="panel config-panel">
+                    <div class="panel-head">
+                        <h3>Runtime Configuration</h3>
+                    </div>
+
+                    <form id="configForm" novalidate>
+                        <label for="thresholdRange">Threat Threshold</label>
+                        <div class="range-row">
+                            <input id="thresholdRange" type="range" min="0.50" max="0.99" step="0.01" value="0.85">
+                            <output id="thresholdValue">0.85</output>
+                        </div>
+
+                        <label for="pollIntervalInput">Polling Interval (ms)</label>
+                        <input id="pollIntervalInput" type="number" min="1000" max="60000" step="500" value="3000">
+
+                        <label for="maxRowsInput">Max Rows per Table</label>
+                        <input id="maxRowsInput" type="number" min="5" max="200" step="5" value="25">
+
+                        <div class="config-actions">
+                            <button type="submit" class="btn primary">Save Configuration</button>
+                            <button type="button" id="resetConfig" class="btn ghost">Reset Defaults</button>
+                        </div>
+                        <p id="configMessage" class="subtle"></p>
+                    </form>
+                </section>
             </section>
         </main>
     </div>

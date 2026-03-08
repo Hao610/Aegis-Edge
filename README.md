@@ -1,92 +1,124 @@
-# 🛡️ Aegis Edge (Network Intrusion Edition)
-**The Zero-Latency Edge Intrusion Detection System (IDS). Detect network anomalies right at the perimeter.**
+# Aegis Edge (Network Intrusion Edition)
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+Zero-latency edge intrusion detection that runs locally and visualizes threats in a multi-view NOC dashboard.
+
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![AI](https://img.shields.io/badge/AI_Engine-Isolation_Forest-FF6F00.svg)
-![Platform](https://img.shields.io/badge/platform-Python_|_HTML-yellow.svg)
+![Platform](https://img.shields.io/badge/platform-Python_|_HTML_|_JS-yellow.svg)
 
-Traditional Network Firewalls and IDS tools send exhaustive packet logs to centralized cloud servers (SIEMs) for analysis. This causes massive bandwidth waste, high latency windows, and privacy risks. **Aegis Edge flips the architecture.** 
+## Overview
 
-By deploying an unsupervised machine learning model (Isolation Forest) directly on edge routers or perimeter nodes, Aegis Edge analyzes normalized packet data (Ports, Protocols, TCP Flags, Payload Sizes) in **< 2ms** locally. True decentralized security.
+Traditional IDS pipelines often send large telemetry streams to centralized systems before detection. Aegis Edge performs anomaly scoring locally at the perimeter, then exposes lightweight operational telemetry to a local dashboard.
 
-### ✨ Key Highlights
-* **🧠 True Edge AI:** Runs a pre-trained scikit-learn anomaly detection model offline, isolating DDoS and port scans instantly.
-* **⚡ Ultra-Low Latency:** Parses features and calculates threats in under 2ms per packet.
-* **🕵️‍♂️ Decentralized Intelligence Sync:** Strips payloads completely. Securely transmits only anonymized flag data (IP, Confidence Score) asynchronously to central trackers.
-* **🌐 NOC Dashboard:** A sleek, local, HTML-based Network Operations Center dashboard monitoring the real-time blocklist.
+Core flow:
 
----
+1. Generate/normalize packet-like data.
+2. Score with a trained Isolation Forest model.
+3. Update local alert and blocklist JSON files.
+4. Render live NOC views from the dashboard.
 
-## 📁 Project Architecture
+## Key Highlights
 
-This architecture pipelines raw packets into an AI model, auto-updates localized blocklists, and serves a modern frontend.
+- Local edge AI inference with a pre-trained Isolation Forest.
+- Low-latency scoring loop suitable for near-real-time response.
+- Local JSON bus (`alerts.json`, `blocklist.json`) for decoupled UI updates.
+- Advanced dashboard with routing, filtering, protocol analytics, and runtime configuration.
 
-```
+## Project Structure
+
+```text
 .
-├── data_pipeline.py         # Phase 1: Simulates and normalizes synthetic network packets
-├── ai_train.py              # Phase 2: Generates a 10K dataset & trains the Isolation Forest
-├── ai_inference.py          # Phase 2: Predicts anomaly probability [0.0 - 1.0] from packets
-├── edge_manager.py          # Phase 3: The infinite loop orchestrator (Blocks IPs, REST Sync)
-├── alerts.json              # Phase 4: Dynamic JSON bus between Manager and Dashboard
-├── blocklist.json           # Phase 4: Local JSON firewall ruleset
-└── dashboard/               # Phase 4: NOC Dashboard
-    ├── index.html           # Dark-mode HTML interface
-    ├── styles.css           # UI Styling
-    └── script.js            # Asynchronous JSON polling and Chart.js rendering
+|-- data_pipeline.py           # Simulates and normalizes synthetic network packets
+|-- ai_train.py               # Trains Isolation Forest and writes edge_anomaly_model.pkl
+|-- ai_inference.py           # Runs anomaly scoring for packet features
+|-- edge_manager.py           # Main orchestration loop (detect, block, sync)
+|-- alerts.json               # Alert stream consumed by dashboard
+|-- blocklist.json            # Local blocked IP records
+|-- dashboard/
+|   |-- index.html            # Routed multi-view NOC UI
+|   |-- styles.css            # Responsive dashboard styling
+|   `-- script.js             # Routing, polling, charts, filtering, settings
+`-- README.md
 ```
 
----
+## Dashboard Modules
 
-## 🚀 How to Run (Local Deployment)
+The dashboard now supports fully clickable sidebar routes:
 
-Running this Edge node simulator is extremely lightweight.
+- `#overview`:
+  - Total blocked count
+  - Peak confidence
+  - Average latency
+  - Last-minute threats
+  - Trend chart + recent alert table
+- `#blocks`:
+  - Search by IP/port/protocol
+  - Protocol filter
+  - Sort options (newest, confidence, source IP)
+  - Local unblock action (UI-level state)
+- `#network`:
+  - Protocol distribution doughnut chart
+  - Top `/24` node segment cards with block count, peak confidence, and average latency
+- `#config`:
+  - Threshold slider
+  - Poll interval configuration
+  - Max rows configuration
+  - Local persistence via `localStorage`
 
-### 1. Prerequisites
-Ensure you have Python 3.9+ installed. Install the necessary machine learning libraries:
+## How To Run
+
+### 1. Install Python dependencies
+
 ```bash
 pip install numpy scikit-learn joblib
 ```
 
-### 2. Train the AI Model
-Before the engine can detect anomalies, it needs a trained weights file (`edge_anomaly_model.pkl`). Run the training script:
+### 2. Train the model
+
 ```bash
 python ai_train.py
 ```
-*This will generate `edge_anomaly_model.pkl` in your root directory.*
 
-### 3. Start the Edge Orchestrator
-Launch the main intrusion detection loop. This script listens to the synthetic pipe, evaluates via AI, updates the blocklist, and syncs to the cloud asynchronously:
+Expected output: `edge_anomaly_model.pkl`
+
+### 3. Start the edge manager
+
 ```bash
 python edge_manager.py
 ```
 
-### 4. Open the NOC Dashboard
-While `edge_manager.py` is running, you can monitor the real-time intercepts via the local dashboard. You **do not** need a backend server for the dashboard!
-1. Simply open `dashboard/index.html` in any web browser.
-2. The UI will automatically poll `alerts.json` every 3 seconds and update the charts dynamically via Javascript.
+This updates `alerts.json` and `blocklist.json` continuously.
 
----
+### 4. Open the dashboard
 
-## 🤝 How to Contribute
+Open `dashboard/index.html` in your browser.
 
-We welcome open-source contributions from network architects and AI engineers! 
+Notes:
 
-1. **Fork the Repository:** Click the "Fork" button at the top-right of this page.
-2. **Clone Your Fork:** `git clone https://github.com/YourUsername/Aegis-Edge.git`
-3. **Commit Your Changes:** `git commit -m 'Add PCAP parsing support'`
-4. **Push to the Branch:** `git push origin main`
-5. **Open a Pull Request:** Navigate to the original repository and open a PR.
+- Dashboard polls `../alerts.json` (default every 3000ms).
+- Poll interval, threshold, and max rows can be changed in `Configuration` and are persisted in browser storage.
 
-**Areas Needing Help:**
-* 🎯 **Raw PCAP Support:** Integrating `scapy` or `pyshark` in `data_pipeline.py` to parse live network interfaces rather than synthetic generated data.
-* 🛡️ **IP Tables:** Expanding `block_ip()` in `edge_manager.py` to execute actual local `iptables` or Windows Firewall commands.
-* 📊 **Dashboard Enhancements:** Expanding Chart.js to track UDP vs TCP anomalies.
+## Security Notes
 
----
+- Dashboard rendering uses DOM-safe text insertion (`textContent`) for dynamic table/card content.
+- Keep `alerts.json` and `blocklist.json` local for this demo workflow.
+- If you expose the dashboard through a server, add CSP and access controls.
 
-## 🛡️ License
+## Known Scope
 
-Distributed under the MIT License. See `LICENSE` for more information.
+- Current unblock action is local UI state (demo behavior), not an OS firewall revoke command.
+- Data source is synthetic unless you extend `data_pipeline.py` with live capture.
 
-*Aegis Edge — Defend the perimeter locally.*
+## Contributing
+
+Contributions are welcome. Suggested areas:
+
+- Live packet capture integration (`scapy` / `pyshark`).
+- Real firewall integration (Windows Firewall / iptables).
+- Backend event streaming (SSE/WebSocket) instead of polling.
+- Role-based controls and audit logging for unblock/config actions.
+
+## License
+
+Distributed under the MIT License.
