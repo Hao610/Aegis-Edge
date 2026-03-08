@@ -1,3 +1,7 @@
+# Aegis Edge - AI-Powered Edge IDS
+# Copyright (c) 2026 LOI CHIANG HAO
+# Licensed under the MIT License
+
 import sys
 import json
 import joblib
