@@ -42,29 +42,47 @@ Core flow:
 `-- README.md
 ```
 
-## Dashboard Modules
+## Dashboard Functions
 
 The dashboard now supports fully clickable sidebar routes:
 
 - `#overview`:
-  - Total blocked count
-  - Peak confidence
-  - Average latency
-  - Last-minute threats
-  - Trend chart + recent alert table
+  - Shows total blocked count, peak confidence, average latency, and last-minute threats.
+  - Displays trend chart (`New Blocks`) and latest intrusion records.
 - `#blocks`:
-  - Search by IP/port/protocol
-  - Protocol filter
-  - Sort options (newest, confidence, source IP)
-  - Local unblock action (UI-level state)
+  - Operational triage view for active blocked records.
+  - Search by IP/port/protocol, protocol filter, and sorting.
+  - Local `Unblock` action removes row from dashboard state only (does not change OS firewall rules).
+- `#evidence`:
+  - Shows why each record was blocked based on engine rule.
+  - Uses engine threshold rule from `edge_manager.py`: `confidence > 0.80`.
+  - Columns include confidence, threshold, delta, and human-readable reason.
 - `#network`:
-  - Protocol distribution doughnut chart
-  - Top `/24` node segment cards with block count, peak confidence, and average latency
+  - Protocol distribution doughnut chart (TCP/UDP/ICMP/OTHER).
+  - Top `/24` node segment cards with block count, peak confidence, and average latency.
 - `#config`:
-  - Threshold slider
-  - Poll interval configuration
-  - Max rows configuration
-  - Local persistence via `localStorage`
+  - Runtime dashboard controls:
+    - Threat threshold used by filtered dashboard views (especially `Active Blocks`).
+    - Poll interval for refreshing `alerts.json`.
+    - Max rows per table render.
+  - Settings persist via `localStorage`.
+
+## Engine Functions
+
+- Threat scoring: `ai_inference.py` computes anomaly confidence for each packet.
+- Block decision: `edge_manager.py` blocks when `score > 0.80`.
+- Alert write path: blocked packets are appended to `alerts.json`.
+- Blocklist write path: unique source IPs are stored in `blocklist.json`.
+- Cloud sync simulation: anonymized signal (`node_id`, `suspicious_ip`, `confidence`) is printed as mock API acknowledgement.
+
+## Data Files and Meaning
+
+- `alerts.json`:
+  - Event log of blocked packets.
+  - Contains timestamp, source IP, destination port, protocol, packet size, and confidence.
+- `blocklist.json`:
+  - Unique blocked IP addresses.
+  - Count can differ from `alerts.json` because one IP may generate multiple blocked events.
 
 ## How To Run
 
@@ -90,14 +108,32 @@ python edge_manager.py
 
 This updates `alerts.json` and `blocklist.json` continuously.
 
-### 4. Open the dashboard
+### 4. Serve and open the dashboard (important)
 
-Open `dashboard/index.html` in your browser.
+Do not open `dashboard/index.html` directly with `file://`.
+The dashboard uses `fetch('../alerts.json')`, which many browsers block in file mode.
+
+Start a local web server from the project root:
+
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/dashboard/
+```
+
+Keep `edge_manager.py` running in a separate terminal so `alerts.json` keeps updating.
 
 Notes:
 
 - Dashboard polls `../alerts.json` (default every 3000ms).
 - Poll interval, threshold, and max rows can be changed in `Configuration` and are persisted in browser storage.
+- If the page is still empty, check browser console (`F12`) for:
+  - CORS/file fetch errors
+  - `Chart is not defined` (CDN blocked)
 
 ## Security Notes
 

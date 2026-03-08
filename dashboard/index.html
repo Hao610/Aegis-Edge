@@ -21,6 +21,7 @@
             <nav class="menu" id="menuNav" aria-label="Main Navigation">
                 <a href="#overview" data-route="overview" class="active">Overview</a>
                 <a href="#blocks" data-route="blocks">Active Blocks</a>
+                <a href="#evidence" data-route="evidence">Threat Evidence</a>
                 <a href="#network" data-route="network">Node Network</a>
                 <a href="#config" data-route="config">Configuration</a>
             </nav>
@@ -130,6 +131,30 @@
                         </table>
                     </div>
                     <p class="subtle" id="blocksCountText">0 records</p>
+                </section>
+            </section>
+
+            <section class="view" data-view="evidence">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Why Alerts Were Blocked</h3>
+                        <p class="subtle" id="evidenceRuleText">Rule: confidence must exceed threshold</p>
+                    </div>
+                    <div class="table-container">
+                        <table id="evidenceTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Source IP</th>
+                                    <th>Confidence</th>
+                                    <th>Threshold</th>
+                                    <th>Delta</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </section>
             </section>
 

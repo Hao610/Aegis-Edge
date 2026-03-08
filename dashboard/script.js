@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const ALERTS_URL = '../alerts.json';
+    const ENGINE_BLOCK_THRESHOLD = 0.80;
     const CONFIG_KEY = 'aegis_dashboard_config_v1';
     const DEFAULT_CONFIG = {
         threshold: 0.85,
@@ -44,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
         protocolFilter: document.getElementById('protocolFilter'),
         sortBy: document.getElementById('sortBy'),
         clearFilters: document.getElementById('clearFilters'),
+        evidenceTableBody: document.querySelector('#evidenceTable tbody'),
+        evidenceRuleText: document.getElementById('evidenceRuleText'),
         thresholdRange: document.getElementById('thresholdRange'),
         thresholdValue: document.getElementById('thresholdValue'),
         pollIntervalInput: document.getElementById('pollIntervalInput'),
@@ -95,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applyRouteFromHash() {
         const raw = location.hash.replace('#', '').trim();
-        const route = ['overview', 'blocks', 'network', 'config'].includes(raw) ? raw : 'overview';
+        const route = ['overview', 'blocks', 'evidence', 'network', 'config'].includes(raw) ? raw : 'overview';
         state.route = route;
 
         els.menuLinks.forEach(link => {
@@ -409,6 +412,33 @@ document.addEventListener('DOMContentLoaded', () => {
         els.blocksCountText.textContent = `${filtered.length} records shown (threshold ${(state.config.threshold * 100).toFixed(0)}%)`;
     }
 
+    function renderEvidenceTable() {
+        clearChildren(els.evidenceTableBody);
+        els.evidenceRuleText.textContent = `Engine rule: confidence > ${(ENGINE_BLOCK_THRESHOLD * 100).toFixed(0)}%`;
+
+        const rows = [...state.alerts]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, state.config.maxRows);
+
+        rows.forEach(alert => {
+            const tr = document.createElement('tr');
+            const threshold = ENGINE_BLOCK_THRESHOLD;
+            const delta = alert.confidence - threshold;
+            const reason = delta > 0
+                ? `Blocked by engine: exceeded 80% by ${(delta * 100).toFixed(2)}%`
+                : 'Blocked by engine at run time (score is near threshold after rounding)';
+
+            appendCell(tr, formatTime(alert.timestamp));
+            appendCell(tr, alert.src_ip);
+            appendCell(tr, `${(alert.confidence * 100).toFixed(2)}%`, 'conf-high');
+            appendCell(tr, `${(threshold * 100).toFixed(2)}%`);
+            appendCell(tr, `${(delta * 100).toFixed(2)}%`);
+            appendCell(tr, reason);
+
+            els.evidenceTableBody.appendChild(tr);
+        });
+    }
+
     function updateProtocolChart(alerts) {
         const counts = { TCP: 0, UDP: 0, ICMP: 0, OTHER: 0 };
 
@@ -517,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateThreatChart();
         renderRecentAlertsTable();
         renderBlocksTable();
+        renderEvidenceTable();
         renderNodeCards();
         updateProtocolChart(getFilteredAlerts());
         renderLastSync();
