@@ -1,104 +1,87 @@
-# 🛡️ Aegis Edge 
-**The Zero-Data-Leak Cybersecurity AI. Real-time phishing detection right in your browser.**
+# 🛡️ Aegis Edge (Network Intrusion Edition)
+**The Zero-Latency Edge Intrusion Detection System (IDS). Detect network anomalies right at the perimeter.**
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![AI](https://img.shields.io/badge/Edge_AI-TensorFlow.js-FF6F00.svg)
-![Platform](https://img.shields.io/badge/platform-Chrome_Extension-yellow.svg)
+![AI](https://img.shields.io/badge/AI_Engine-Isolation_Forest-FF6F00.svg)
+![Platform](https://img.shields.io/badge/platform-Python_|_HTML-yellow.svg)
 
-Traditional phishing detection tools send your private emails and browsing data to a centralized cloud for analysis, compromising your privacy. **Aegis Edge changes the paradigm.** By deploying a quantized deep learning classification model directly inside a Manifest V3 Chrome Extension, Aegis Edge parses and evaluates incoming threats locally. Your text, tokens, and browsing behavior *never* leave your device. 
+Traditional Network Firewalls and IDS tools send exhaustive packet logs to centralized cloud servers (SIEMs) for analysis. This causes massive bandwidth waste, high latency windows, and privacy risks. **Aegis Edge flips the architecture.** 
+
+By deploying an unsupervised machine learning model (Isolation Forest) directly on edge routers or perimeter nodes, Aegis Edge analyzes normalized packet data (Ports, Protocols, TCP Flags, Payload Sizes) in **< 2ms** locally. True decentralized security.
 
 ### ✨ Key Highlights
-* **🧠 True Edge AI:** Runs a compressed ML model via TensorFlow.js entirely offline.
-* **⚡ 12ms Inference:** Lightning-fast threat detection the moment a DOM element renders.
-* **🕵️‍♂️ Absolute Privacy:** Serverless architecture means zero cloud data leaks.
-* **🌐 Webmail Integration:** Seamlessly intercepts dynamic React/Angular nodes in Gmail, Outlook, and Yahoo without breaking the UI.
+* **🧠 True Edge AI:** Runs a pre-trained scikit-learn anomaly detection model offline, isolating DDoS and port scans instantly.
+* **⚡ Ultra-Low Latency:** Parses features and calculates threats in under 2ms per packet.
+* **🕵️‍♂️ Decentralized Intelligence Sync:** Strips payloads completely. Securely transmits only anonymized flag data (IP, Confidence Score) asynchronously to central trackers.
+* **🌐 NOC Dashboard:** A sleek, local, HTML-based Network Operations Center dashboard monitoring the real-time blocklist.
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
-This project is divided into several interconnected phases/components:
+This architecture pipelines raw packets into an AI model, auto-updates localized blocklists, and serves a modern frontend.
 
 ```
 .
-├── dashboard/               # Phase 4: SaaS Threat Dashboard (The Command Center)
-│   ├── index.html           # Main dashboard UI
-│   ├── styles.css           # Dashboard styling
-│   ├── script.js            # Dashboard logic (Map, Table, etc.)
-│   └── mock_data.json       # Simulated threat detection data
-├── extension/               # Phase 2: Chrome Extension Architecture (The Shield)
-│   ├── manifest.json        # Manifest V3 configuration
-│   ├── background.js        # Service Worker for extension lifecycle
-│   ├── content.js           # DOM parsing and warning injection
-│   ├── tf.min.js            # Offline TensorFlow.js library
-│   ├── model_inference.js   # Client-side TFJS inference
-│   ├── model/               # Quantized TF.js AI Model & Weights
-│   ├── icons/               # Extension Assets
-│   ├── popup.html           # Simple Extension UI
-│   └── styles.css           # Styling for highlighted malicious elements
-├── landing_page/            # Phase 3: Viral Landing Page (The Hook)
-│   ├── index.html           # High-converting landing page
-│   ├── styles.css           # Custom styling and animations
-│   └── script.js            # "Hacker Sandbox" terminal simulation
-├── model_conversion/        # Phase 1: Edge AI Model Conversion (The Brain)
-│   ├── convert_model.py     # Script to convert Keras CNN-BiLSTM to TF.js
-│   └── generate_mock_model_browser.html # Fallback in-browser model generator
-└── pitch/                   # Phase 5: Pitching & Monetization Strategy
-    └── pitch_deck.md        # Comprehensive pitch outline
+├── data_pipeline.py         # Phase 1: Simulates and normalizes synthetic network packets
+├── ai_train.py              # Phase 2: Generates a 10K dataset & trains the Isolation Forest
+├── ai_inference.py          # Phase 2: Predicts anomaly probability [0.0 - 1.0] from packets
+├── edge_manager.py          # Phase 3: The infinite loop orchestrator (Blocks IPs, REST Sync)
+├── alerts.json              # Phase 4: Dynamic JSON bus between Manager and Dashboard
+├── blocklist.json           # Phase 4: Local JSON firewall ruleset
+└── dashboard/               # Phase 4: NOC Dashboard
+    ├── index.html           # Dark-mode HTML interface
+    ├── styles.css           # UI Styling
+    └── script.js            # Asynchronous JSON polling and Chart.js rendering
 ```
 
 ---
 
-## 🚀 How to Install for Developers (Customizing Your Extension)
+## 🚀 How to Run (Local Deployment)
 
-We want you to customize and extend Aegis Edge! Installing this locally on your machine for testing and modification is incredibly straightforward.
+Running this Edge node simulator is extremely lightweight.
 
-### 1. Load the Extension Unpacked
-To run the local, modifiable version of the extension in your browser:
-1. Open Google Chrome or Microsoft Edge and navigate to `chrome://extensions/` (or `edge://extensions/`).
-2. Toggle **Developer mode** on in the top right corner.
-3. Click the **Load unpacked** button.
-4. Select the `Aegis Edge/extension` folder from your cloned repository.
-5. Navigate to a supported webmail client (Gmail, Outlook, Yahoo) to test the threat interception!
-
-### 2. Modifying the Interface (Frontend & Dashboard)
-You can directly preview the landing page or the SaaS Threat Dashboard by launching a generic local static server.
-
+### 1. Prerequisites
+Ensure you have Python 3.9+ installed. Install the necessary machine learning libraries:
 ```bash
-# Preview Landing Page
-cd landing_page
-npx serve . 
-# Or with Python: python -m http.server 8000
-
-# Preview Dashboard
-cd ../dashboard
-npx serve .
-# Or with Python: python -m http.server 8001
+pip install numpy scikit-learn joblib
 ```
 
-### 3. Modifying the AI Model (The Brain)
-If you wish to train your own CNN-BiLSTM model or adjust the architecture, check the `model_conversion/` directory:
-- We've provided a Python script (`convert_model.py`) to convert Keras models into `tf.js` format using quantization.
-- *Alternatively, if you run into Python `tensorflowjs` compatibility issues, simply open `model_conversion/generate_mock_model_browser.html` in Chrome/Edge to generate the model instantly in your browser!*
+### 2. Train the AI Model
+Before the engine can detect anomalies, it needs a trained weights file (`edge_anomaly_model.pkl`). Run the training script:
+```bash
+python ai_train.py
+```
+*This will generate `edge_anomaly_model.pkl` in your root directory.*
+
+### 3. Start the Edge Orchestrator
+Launch the main intrusion detection loop. This script listens to the synthetic pipe, evaluates via AI, updates the blocklist, and syncs to the cloud asynchronously:
+```bash
+python edge_manager.py
+```
+
+### 4. Open the NOC Dashboard
+While `edge_manager.py` is running, you can monitor the real-time intercepts via the local dashboard. You **do not** need a backend server for the dashboard!
+1. Simply open `dashboard/index.html` in any web browser.
+2. The UI will automatically poll `alerts.json` every 3 seconds and update the charts dynamically via Javascript.
 
 ---
 
 ## 🤝 How to Contribute
 
-We welcome open-source contributions from security researchers, AI engineers, and frontend developers! If you want to modify this extension to suit your needs or help improve the global codebase, follow these steps:
+We welcome open-source contributions from network architects and AI engineers! 
 
 1. **Fork the Repository:** Click the "Fork" button at the top-right of this page.
 2. **Clone Your Fork:** `git clone https://github.com/YourUsername/Aegis-Edge.git`
-3. **Create a Feature Branch:** `git checkout -b feature/AmazingNewFeature`
-4. **Commit Your Changes:** `git commit -m 'Add some AmazingNewFeature'`
-5. **Push to the Branch:** `git push origin feature/AmazingNewFeature`
-6. **Open a Pull Request:** Navigate to the original repository and open a PR with a description of your changes.
+3. **Commit Your Changes:** `git commit -m 'Add PCAP parsing support'`
+4. **Push to the Branch:** `git push origin main`
+5. **Open a Pull Request:** Navigate to the original repository and open a PR.
 
 **Areas Needing Help:**
-* 🎯 **Model Accuracy:** Improving the text processing and vocabulary pipeline for the inference engine.
-* 🛡️ **Heuristic Fallbacks:** Adding regex or basic heuristic checks in `content.js` to run *alongside* the ML model.
-* 🎨 **Dashboard UI:** Enhancing the Map visualizer in the SaaS Command Center using WebGL.
+* 🎯 **Raw PCAP Support:** Integrating `scapy` or `pyshark` in `data_pipeline.py` to parse live network interfaces rather than synthetic generated data.
+* 🛡️ **IP Tables:** Expanding `block_ip()` in `edge_manager.py` to execute actual local `iptables` or Windows Firewall commands.
+* 📊 **Dashboard Enhancements:** Expanding Chart.js to track UDP vs TCP anomalies.
 
 ---
 
@@ -106,4 +89,4 @@ We welcome open-source contributions from security researchers, AI engineers, an
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-*Aegis Edge — Because your browser is the new fortress.*
+*Aegis Edge — Defend the perimeter locally.*

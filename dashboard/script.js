@@ -1,105 +1,127 @@
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
+    let threatChart;
+    let lastAlertCount = 0;
+    const ALERTS_URL = '../alerts.json';
+    // In a real app we might fetch from a local API, but for this demo 
+    // we fetch the statically written JSON file by the edge_manager.
 
-    // Fetch mock data
-    try {
-        const response = await fetch('mock_data.json');
-        const data = await response.json();
+    function initChart() {
+        const ctx = document.getElementById('threatChart').getContext('2d');
 
-        populateTable(data);
-        initHeatmap(data);
-        updateSummary(data);
+        // Setup initial dummy data (or empty)
+        const initLabels = Array.from({ length: 12 }, (_, i) => `T-${12 - i}s`);
+        const initData = Array(12).fill(0);
 
-    } catch (error) {
-        console.error("Failed to load mock data:", error);
+        threatChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: initLabels,
+                datasets: [{
+                    label: 'Intrusions Blocked',
+                    data: initData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ef4444'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8', stepSize: 1 }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                animation: { duration: 400 }
+            }
+        });
     }
 
-    function populateTable(threats) {
-        const tbody = document.querySelector('#threatsTable tbody');
+    function updateChart(alerts) {
+        // Simple logic: Group alerts by minute or simulate a rolling window
+        // For visual effect, let's just make the chart bounce based on total count
+        const currentData = threatChart.data.datasets[0].data;
 
-        threats.forEach(t => {
+        // Shift left
+        currentData.shift();
+
+        // Push a random spike if alerts changed, else 0
+        if (alerts.length > lastAlertCount) {
+            const newThreats = alerts.length - lastAlertCount;
+            currentData.push(newThreats + Math.floor(Math.random() * 3)); // Add some noise for the NOC feel
+        } else {
+            // Decay
+            currentData.push(Math.max(0, currentData[currentData.length - 1] - 1));
+        }
+
+        threatChart.update();
+    }
+
+    function renderTable(alerts) {
+        const tbody = document.querySelector('#alertsTable tbody');
+        tbody.innerHTML = '';
+
+        // Reverse array to show newest first, pick top 15
+        const recentAlerts = [...alerts].reverse().slice(0, 15);
+
+        recentAlerts.forEach((alert, index) => {
             const tr = document.createElement('tr');
 
-            // Format date
-            const date = new Date(t.timestamp).toLocaleString();
+            // If it's a completely new alert we haven't rendered before, flash it
+            if (index < (alerts.length - lastAlertCount)) {
+                tr.className = 'table-row-new';
+            }
 
-            // Format Threat badge
-            let badgeClass = 'badge-phishing';
-            if (t.threatType === 'Scam') badgeClass = 'badge-scam';
-            if (t.threatType === 'Malware Link') badgeClass = 'badge-malware';
+            const timeStr = new Date(alert.timestamp * 1000).toLocaleTimeString();
 
-            // Format confidence
-            const confidenceStr = (t.confidenceScore * 100).toFixed(1) + '%';
-
-            const dateTd = document.createElement('td');
-            dateTd.textContent = date;
-
-            const threatTd = document.createElement('td');
-            const badge = document.createElement('span');
-            badge.className = `badge ${badgeClass}`;
-            badge.textContent = String(t.threatType || '');
-            threatTd.appendChild(badge);
-
-            const confidenceTd = document.createElement('td');
-            confidenceTd.textContent = confidenceStr;
-
-            const targetUriTd = document.createElement('td');
-            targetUriTd.style.color = '#94a3b8';
-            targetUriTd.textContent = String(t.targetUri || '');
-
-            const actionTd = document.createElement('td');
-            actionTd.className = 'status-blocked';
-            actionTd.textContent = `BLOCKED ${String(t.action || '')}`;
-
-            tr.append(dateTd, threatTd, confidenceTd, targetUriTd, actionTd);
+            tr.innerHTML = `
+                <td>${timeStr}</td>
+                <td style="color: #38bdf8">${alert.src_ip}</td>
+                <td>${alert.dst_port}</td>
+                <td>${alert.protocol}</td>
+                <td class="conf-high">${(alert.confidence * 100).toFixed(2)}%</td>
+            `;
             tbody.appendChild(tr);
         });
+
+        // Update Counter
+        document.getElementById('blockedCounter').innerText = alerts.length.toLocaleString();
+
+        lastAlertCount = alerts.length;
     }
 
-    function buildPopupContent(threatType, confidenceScore) {
-        const root = document.createElement('div');
-        const title = document.createElement('b');
-        title.textContent = `${String(threatType || '')} Blocked`;
-        const lineBreak = document.createElement('br');
-        const body = document.createTextNode(`Confidence: ${(confidenceScore * 100).toFixed(1)}%`);
-        root.append(title, lineBreak, body);
-        return root;
+    async function pollAlerts() {
+        try {
+            // Add cache-busting query param so browser doesn't cache the local JSON
+            const response = await fetch(`${ALERTS_URL}?t=${new Date().getTime()}`);
+            if (response.ok) {
+                const alerts = await response.json();
+                renderTable(alerts);
+                updateChart(alerts);
+            }
+        } catch (error) {
+            console.warn("Waiting for edge_manager to write alerts.json...");
+        }
     }
 
-    function initHeatmap(threats) {
-        // Initialize Leaflet map targeting the 'threatMap' div
-        // Centered roughly globally
-        const map = L.map('threatMap', {
-            center: [20, 0],
-            zoom: 2,
-            zoomControl: false,
-            scrollWheelZoom: false
-        });
+    // Initialization
+    initChart();
 
-        // Use a dark-themed tile layer appropriate for cyber dashboards
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 19
-        }).addTo(map);
+    // Initial fetch
+    pollAlerts();
 
-        // Add markers for threats
-        threats.forEach(t => {
-            // Circle markers to look like a heatmap point
-            L.circleMarker([t.lat, t.lng], {
-                radius: 8,
-                fillColor: "#ef4444",
-                color: "#f87171",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.6
-            }).addTo(map)
-                .bindPopup(buildPopupContent(t.threatType, t.confidenceScore));
-        });
-    }
-
-    function updateSummary(threats) {
-        // Just simulating a random large number mapping + recent records
-        const base = 12450;
-        document.getElementById('totalThreats').innerText = (base + threats.length).toLocaleString();
-    }
+    // Poll every 3 seconds
+    setInterval(pollAlerts, 3000);
 });
