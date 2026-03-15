@@ -148,7 +148,9 @@ Notes:
 
 ## Contributing
 
-Contributions are welcome. Suggested areas:
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.
+
+Suggested areas:
 
 - Live packet capture integration (`scapy` / `pyshark`).
 - Real firewall integration (Windows Firewall / iptables).
